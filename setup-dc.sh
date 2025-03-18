@@ -1,4 +1,4 @@
-cd /var/www/demo || exit
+cd /var/www/html || exit
 
 sudo docker-compose build
 sudo docker-compose up -d db --wait && sudo docker-compose up -d mautic_web --wait
