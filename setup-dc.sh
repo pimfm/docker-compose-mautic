@@ -1,6 +1,6 @@
 cd /var/www
-docker-compose build
-docker-compose up -d db --wait && docker-compose up -d mautic_web --wait
+sudo docker-compose build
+sudo docker-compose up -d db --wait && sudo docker-compose up -d mautic_web --wait
 
 echo "## Wait for basic-mautic_web-1 container to be fully running"
 while ! docker exec basic-mautic_web-1 sh -c 'echo "Container is running"'; do
@@ -9,7 +9,7 @@ while ! docker exec basic-mautic_web-1 sh -c 'echo "Container is running"'; do
 done
 
 echo "## Check if Mautic is installed"
-if docker-compose exec -T mautic_web test -f /var/www/html/config/local.php && docker-compose exec -T mautic_web grep -q "site_url" /var/www/html/config/local.php; then
+if sudo docker-compose exec -T mautic_web test -f /var/www/html/config/local.php && sudo docker-compose exec -T mautic_web grep -q "site_url" /var/www/html/config/local.php; then
     echo "## Mautic is installed already."
 else
     # Check if the container exists and is running
@@ -27,11 +27,11 @@ else
     fi
     echo "## Installing Mautic..."
     # Check if the ports block each other when supporting multiple clients, look into a way to pick an available port automatically
-    docker-compose exec -T -u www-data -w /var/www/html mautic_web php ./bin/console mautic:install --force --admin_email {{AGENCY_ADMIN_EMAIL_ADDRESS}} --admin_password {{AGENCY_ADMIN_PASSWORD}} http://{{SERVER_IP_ADDRESS}}:{{SERVER_PORT}}
+    sudo docker-compose exec -T -u www-data -w /var/www/html mautic_web php ./bin/console mautic:install --force --admin_email {{AGENCY_ADMIN_EMAIL_ADDRESS}} --admin_password {{AGENCY_ADMIN_PASSWORD}} http://{{SERVER_IP_ADDRESS}}:{{SERVER_PORT}}
 fi
 
 echo "## Starting all the containers"
-docker-compose up -d
+sudo docker-compose up -d
 
 CLIENT_SUBDOMAIN="{{CLIENT_SUBDOMAIN}}"
 
@@ -95,12 +95,12 @@ else
 fi
 
 echo "## Check if Mautic is installed"
-if docker-compose exec -T mautic_web test -f /var/www/html/config/local.php && docker-compose exec -T mautic_web grep -q "site_url" /var/www/html/config/local.php; then
+if sudo docker-compose exec -T mautic_web test -f /var/www/html/config/local.php && sudo docker-compose exec -T mautic_web grep -q "site_url" /var/www/html/config/local.php; then
     echo "## Mautic is installed already."
     
     # Replace the site_url value with the domain
     echo "## Updating site_url in Mautic configuration..."
-    docker-compose exec -T mautic_web sed -i "s|'site_url' => '.*',|'site_url' => 'https://$CLIENT_SUBDOMAIN',|g" /var/www/html/config/local.php
+    sudo docker-compose exec -T mautic_web sed -i "s|'site_url' => '.*',|'site_url' => 'https://$CLIENT_SUBDOMAIN',|g" /var/www/html/config/local.php
 fi
 
 echo "## Script execution completed"
