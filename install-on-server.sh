@@ -42,9 +42,10 @@ sed -i "s/{{AGENCY_ADMIN_EMAIL_ADDRESS}}/example-email@ormine.nl/g" setup-dc.sh
 sed -i "s/{{AGENCY_ADMIN_PASSWORD}}/examplepassword/g" setup-dc.sh
 sed -i "s/{{CLIENT_SUBDOMAIN}}/demo.ormine.nl/g" setup-dc.sh
 cat setup-dc.sh
+echo "## Done"
 
 # Install Mautic
 echo "## Installing Mautic..."
-sudo mkdir -p /var/www && cd /var/www || exit
+sudo mkdir -p /var/www
 ./setup-dc.sh
 echo "## Done"
