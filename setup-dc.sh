@@ -13,9 +13,10 @@ if docker compose exec -T mautic_web test -f /var/www/html/config/local.php && d
     echo "## Mautic is installed already."
 else
     # Check if the container exists and is running
+    # replace basic with the Docker network of the client
     if docker ps --filter "name=basic-mautic_worker-1" --filter "status=running" -q | grep -q .; then
         echo "Stopping basic-mautic_worker-1 to avoid https://github.com/mautic/docker-mautic/issues/270"
-        docker stop basic-mautic_worker-1
+        docker stop ${{CLIENT_PREFIX}}-mautic_worker-1
         echo "## Ensure the worker is stopped before installing Mautic"
         while docker ps -q --filter name=basic-mautic_worker-1 | grep -q .; do
             echo "### Waiting for basic-mautic_worker-1 to stop..."
@@ -25,7 +26,8 @@ else
         echo "Container basic-mautic_worker-1 does not exist or is not running."
     fi
     echo "## Installing Mautic..."
-    docker compose exec -T -u www-data -w /var/www/html mautic_web php ./bin/console mautic:install --force --admin_email {{EMAIL_ADDRESS}} --admin_password {{MAUTIC_PASSWORD}} http://{{IP_ADDRESS}}:{{PORT}}
+    # Check if the ports block each other when supporting multiple clients, look into a way to pick an available port automatically
+    docker compose exec -T -u www-data -w /var/www/html mautic_web php ./bin/console mautic:install --force --admin_email {{AGENCY_ADMIN_EMAIL_ADDRESS}} --admin_password {{AGENCY_ADMIN_PASSWORD}} http://{{SERVER_IP_ADDRESS}}:{{SERVER_PORT}}
 fi
 
 echo "## Starting all the containers"

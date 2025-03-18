@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Create a swap file
+# Possibly do these things to get EC2 to work, but first try without
 sudo fallocate -l 1G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile

@@ -1,10 +1,17 @@
-name: Deploy to DigitalOcean
+name: Deploy to AWS EC2
 
 on:
   push:
     branches:
       - main
 
+# Steps
+# 1. Deploy 1 client to AWS EC2
+# 1.1. Replace local DB with RDS
+# 1.2. Setup nginx and certbot in docker compose instead of apt-get to allow multiple clients.
+# 1.3. Upgrade Mautic version to 6.x
+# 2. Deploy 1 client to AWS ECS
+# 3. Support multiple clients (configure docroot or Docker networks)
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,21 +27,27 @@ jobs:
         set +a
         echo "MAUTIC_PORT=${MAUTIC_PORT}" >> $GITHUB_ENV
 
+    # Load main domain from var
+    # ${{ vars.AGENCY_DOMAIN }}:
+
+    #client:
+    #  description: 'Pass along the client name to deploy for (will be used for subdomain and networking), e.g. acme for acme.${{ vars.AGENCY_DOMAIN }}'
+    # Pass as user data to not expose client name
+    #  required: true
+    #  default: 'prod'
+
     - name: Check EMAIL_ADDRESS environment variable
       run: |
-        if [ -z "${EMAIL_ADDRESS}" ]; then
-          echo "Error: Missing required environment variable: EMAIL_ADDRESS"
+        if [ -z "${AGENCY_ADMIN_EMAIL_ADDRESS}" ]; then
+          echo "Error: Missing required environment variable: AGENCY_ADMIN_EMAIL_ADDRESS"
           exit 1
         fi
       env:
-        EMAIL_ADDRESS: ${{ vars.EMAIL_ADDRESS }}
+        AGENCY_ADMIN_EMAIL_ADDRESS: ${{ vars.AGENCY_ADMIN_EMAIL_ADDRESS }}
 
     - name: Check required secrets
       env:
-        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-        DIGITALOCEAN_SSH_FINGERPRINT: ${{ secrets.DIGITALOCEAN_SSH_FINGERPRINT }}
-        MAUTIC_PASSWORD: ${{ secrets.MAUTIC_PASSWORD }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        AGENCY_ADMIN_PASSWORD: ${{ secrets.AGENCY_ADMIN_PASSWORD }}
       run: |
         error_missing_secrets=()
         check_secret() {
@@ -43,60 +56,58 @@ jobs:
           fi
         }
 
-        check_secret "DIGITALOCEAN_ACCESS_TOKEN"
-        check_secret "DIGITALOCEAN_SSH_FINGERPRINT"
-        check_secret "MAUTIC_PASSWORD"
-        check_secret "SSH_PRIVATE_KEY"
+        check_secret "AGENCY_ADMIN_PASSWORD"
 
         if [ ${#error_missing_secrets[@]} -ne 0 ]; then
           echo "Error: Missing required secrets: ${error_missing_secrets[*]}"
           exit 1
         fi
 
-    - name: Install doctl
-      uses: digitalocean/action-doctl@v2
-      with:
-        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+    # Check AWS Codedeploy with Github
+#    - name: Install doctl
+#      uses: digitalocean/action-doctl@v2
+#      with:
+#        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-    - name: Create VPS if it doesn't exist
-      run: |
-        if ! doctl compute droplet list | grep -q 'mautic-vps'; then
-          doctl compute droplet create mautic-vps --image docker-20-04 --size s-1vcpu-1gb --region nyc1 --ssh-keys ${{ secrets.DIGITALOCEAN_SSH_FINGERPRINT }} --wait --user-data-file setup-vps.sh --enable-monitoring
-          echo "droplet_created=true" >> $GITHUB_ENV
-        else
-          echo "Droplet 'mautic-vps' already exists."
-          echo "droplet_created=true" >> $GITHUB_ENV
-        fi
+#    - name: Create VPS if it doesn't exist
+#      run: |
+#        if ! doctl compute droplet list | grep -q 'mautic-vps'; then
+#          doctl compute droplet create mautic-vps --image docker-20-04 --size s-1vcpu-1gb --region nyc1 --ssh-keys ${{ secrets.DIGITALOCEAN_SSH_FINGERPRINT }} --wait --user-data-file setup-vps.sh --enable-monitoring
+#          echo "droplet_created=true" >> $GITHUB_ENV
+#        else
+#          echo "Droplet 'mautic-vps' already exists."
+#          echo "droplet_created=true" >> $GITHUB_ENV
+#        fi
 
-    - name: Get VPS IP
-      run: |
-        echo "Waiting for droplet to be ready..."
-        while : ; do
-          echo "."
-          sleep 2
-          STATUS=$(doctl compute droplet get mautic-vps --format Status --no-header)
-          if [ "$STATUS" = "active" ]; then
-            IP=$(doctl compute droplet get mautic-vps --format PublicIPv4 --no-header)
-            if [ -n "$IP" ]; then
-              echo "Droplet is active. IP address: $IP"
-              break
-            fi
-          fi
-        done
-        echo "ip=$IP" >> $GITHUB_ENV
+#    - name: Get VPS IP
+#      run: |
+#        echo "Waiting for droplet to be ready..."
+#        while : ; do
+#          echo "."
+#          sleep 2
+#          STATUS=$(doctl compute droplet get mautic-vps --format Status --no-header)
+#          if [ "$STATUS" = "active" ]; then
+#            IP=$(doctl compute droplet get mautic-vps --format PublicIPv4 --no-header)
+#            if [ -n "$IP" ]; then
+#              echo "Droplet is active. IP address: $IP"
+#              break
+#            fi
+#          fi
+#        done
+#        echo "ip=$IP" >> $GITHUB_ENV
 
-    - name: Wait for server to be accessible
-      run: |
-        echo "Waiting for server at ${{ env.ip }} to be accessible..."
-        while : ; do
-          if nc -z ${{ env.ip }} 22; then
-            echo "Server is up and accessible."
-            break
-          else
-            echo "."
-            sleep 2
-          fi
-        done
+#    - name: Wait for server to be accessible
+#      run: |
+#        echo "Waiting for server at ${{ env.ip }} to be accessible..."
+#        while : ; do
+#          if nc -z ${{ env.ip }} 22; then
+#            echo "Server is up and accessible."
+#            break
+#          else
+#            echo "."
+#            sleep 2
+#          fi
+#        done
 
     - name: Prepare virtual server configuration
       if: ${{ vars.DOMAIN }}
@@ -112,7 +123,7 @@ jobs:
           cat nginx-virtual-host-${{ vars.DOMAIN }} # debug
         else
           echo "Error: Domain ${{ vars.DOMAIN }} does not point to the droplet IP."
-          echo "To configure your DNS settings, access your domain registrar's DNS management page. Locate the DNS settings or DNS management section. You should create or update an A record with the following details: Name: @ (or your subdomain, e.g., www if your domain is www.example.com), Type: A, Value: ${{ env.ip }}. This change will point ${{ vars.DOMAIN }} to the IP address ${{ env.ip }}. Note that DNS changes can take up to 48 hours to propagate globally."
+          echo "To configure yRour DNS settings, access your domain registrar's DNS management page. Locate the DNS settings or DNS management section. You should create or update an A record with the following details: Name: @ (or your subdomain, e.g., www if your domain is www.example.com), Type: A, Value: ${{ env.ip }}. This change will point ${{ vars.DOMAIN }} to the IP address ${{ env.ip }}. Note that DNS changes can take up to 48 hours to propagate globally."
           exit 1
         fi
 
