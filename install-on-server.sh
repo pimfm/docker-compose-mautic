@@ -8,7 +8,7 @@ sudo yum install certbot -y
 sudo yum install python3-certbot-nginx -y
 sudo yum install vim -y
 sudo yum install nano -y
-sudo yum install crontab -y
+sudo yum install cron -y
 echo "## Done"
 
 # Setup docker compose
@@ -34,7 +34,6 @@ sed -i "s/{{CLIENT_SUBDOMAIN}}/demo.ormine.nl/g" "nginx-virtual-host-demo.ormine
 sed -i "s/{{PORT}}/8001/g" "nginx-virtual-host-demo.ormine.nl"
 sudo mkdir -p /etc/nginx/sites-available
 mv nginx-virtual-host-demo.ormine.nl /etc/nginx/sites-available/nginx-virtual-host-demo.ormine.nl
-cat nginx-virtual-host-demo.ormine.nl
 echo "## Done"
 
 # Configure HTTPS with Certbot
@@ -44,7 +43,6 @@ sed -i "s/{{SERVER_PORT}}/8001/g" setup-dc.sh
 sed -i "s/{{AGENCY_ADMIN_EMAIL_ADDRESS}}/example-email@ormine.nl/g" setup-dc.sh
 sed -i "s/{{AGENCY_ADMIN_PASSWORD}}/examplepassword/g" setup-dc.sh
 sed -i "s/{{CLIENT_SUBDOMAIN}}/demo.ormine.nl/g" setup-dc.sh
-cat setup-dc.sh
 echo "## Done"
 
 # Install Mautic
