@@ -19,9 +19,9 @@ sudo chmod +x /usr/local/bin/docker-compose
 docker-compose version
 
 # Setup docker
-# sudo systemctl start docker
-# sudo systemctl enable docker
-# sudo systemctl is-enabled docker
+ sudo systemctl start docker
+ sudo systemctl enable docker
+ sudo systemctl is-enabled docker
 
 # Configure Domain with NGINX
 # Generate subdomain from CLIENT_PREFIX and AGENCY_DOMAIN
