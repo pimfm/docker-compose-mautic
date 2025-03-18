@@ -39,8 +39,9 @@ echo "## Configuring NGINX..."
 mv nginx-virtual-host-template "nginx-virtual-host-demo.ormine.nl"
 sed -i "s/{{CLIENT_SUBDOMAIN}}/demo.ormine.nl/g" "nginx-virtual-host-demo.ormine.nl"
 sed -i "s/{{PORT}}/8001/g" "nginx-virtual-host-demo.ormine.nl"
-sudo mkdir -p /etc/nginx/sites-available
-mv nginx-virtual-host-demo.ormine.nl /etc/nginx/sites-available/nginx-virtual-host-demo.ormine.nl
+# sudo mkdir -p /etc/nginx/sites-available
+# mv nginx-virtual-host-demo.ormine.nl /etc/nginx/sites-available/nginx-virtual-host-demo.ormine.nl
+# cp nginx-virtual-host-demo.ormine.nl /etc/nginx/conf.d/nginx-virtual-host-demo.ormine.nl
 echo "## Done"
 
 # Configure HTTPS with Certbot
@@ -54,6 +55,5 @@ echo "## Done"
 
 # Install Mautic
 echo "## Installing Mautic..."
-sudo mkdir -p /var/www
 ./setup-dc.sh
 echo "## Done"
