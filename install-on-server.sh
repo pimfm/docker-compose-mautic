@@ -8,7 +8,7 @@ sudo yum install certbot -y
 sudo yum install python3-certbot-nginx -y
 sudo yum install vim -y
 sudo yum install nano -y
-sudo yum install cron -y
+sudo yum install cronie -y
 echo "## Done"
 
 # Setup docker compose
@@ -24,6 +24,13 @@ echo "## Starting Docker..."
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo systemctl is-enabled docker
+echo "## Done"
+
+# Setup cron
+echo "## Starting Cron..."
+sudo systemctl start crond
+sudo systemctl enable crond
+sudo systemctl is-enabled crond
 echo "## Done"
 
 # Configure Domain with NGINX
