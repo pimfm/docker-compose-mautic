@@ -1,4 +1,3 @@
-cd /var/www
 sudo docker-compose build
 sudo docker-compose up -d db --wait && sudo docker-compose up -d mautic_web --wait
 
@@ -40,16 +39,16 @@ if [[ "$CLIENT_SUBDOMAIN" == *"CLIENT_SUBDOMAIN"* ]]; then
     exit 0
 fi
 
-SERVER_IP_ADDRESS=$(curl -s http://icanhazip.com)
+#SERVER_IP_ADDRESS=$(curl -s http://icanhazip.com)
 
-echo "## Checking if $CLIENT_SUBDOMAIN points to this IP address..."
-DOMAIN_IP=$(dig +short $CLIENT_SUBDOMAIN)
-if [ "$DOMAIN_IP" != "$SERVER_IP_ADDRESS" ]; then
-    echo "## $CLIENT_SUBDOMAIN does not point to this IP address ($SERVER_IP_ADDRESS). Exiting..."
-    exit 1
-fi
+#echo "## Checking if $CLIENT_SUBDOMAIN points to this IP address..."
+#DOMAIN_IP=$(dig +short $CLIENT_SUBDOMAIN)
+#if [ "$DOMAIN_IP" != "$SERVER_IP_ADDRESS" ]; then
+#    echo "## $CLIENT_SUBDOMAIN does not point to this IP address ($SERVER_IP_ADDRESS). Exiting..."
+#    exit 1
+#fi
 
-echo "## $CLIENT_SUBDOMAIN is available and points to this droplet. Nginx configuration..."
+#echo "## $CLIENT_SUBDOMAIN is available and points to this droplet. Nginx configuration..."
 
 SOURCE_PATH="/var/www/nginx-virtual-host-$CLIENT_SUBDOMAIN"
 TARGET_PATH="/etc/nginx/sites-enabled/nginx-virtual-host-$CLIENT_SUBDOMAIN"
