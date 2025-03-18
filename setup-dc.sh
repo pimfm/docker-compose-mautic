@@ -50,7 +50,7 @@ fi
 
 #echo "## $CLIENT_SUBDOMAIN is available and points to this droplet. Nginx configuration..."
 
-SOURCE_PATH="$HOME/demo/nginx-virtual-host-$CLIENT_SUBDOMAIN"
+SOURCE_PATH="/etc/nginx/sites-available/nginx-virtual-host-$CLIENT_SUBDOMAIN"
 TARGET_PATH="/etc/nginx/sites-enabled/nginx-virtual-host-$CLIENT_SUBDOMAIN"
 
 # Ensure symlink path exists
