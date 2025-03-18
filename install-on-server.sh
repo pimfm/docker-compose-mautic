@@ -46,7 +46,7 @@ echo "## Done"
 
 # Configure HTTPS with Certbot
 echo "## Configuring HTTPS with Certbot..."
-sed -i "s/{{SERVER_IP_ADDRESS}}/18.197.107.66/g" setup-dc.sh
+sed -i "s/{{SERVER_IP_ADDRESS}}/12.12.12.12/g" setup-dc.sh
 sed -i "s/{{SERVER_PORT}}/8001/g" setup-dc.sh
 sed -i "s/{{AGENCY_ADMIN_EMAIL_ADDRESS}}/example-email@ormine.nl/g" setup-dc.sh
 sed -i "s/{{AGENCY_ADMIN_PASSWORD}}/examplepassword/g" setup-dc.sh
