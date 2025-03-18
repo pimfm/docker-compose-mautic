@@ -1,9 +1,12 @@
 
 # Install dependencies
-sudo yum install -y curl git docker nginx certbot python3-certbot-nginx vim nano
-curl --version
-git --version
-docker --version
+sudo yum install git -y
+sudo yum install docker -y
+sudo yum install nginx -y
+sudo yum install certbot -y
+sudo yum install python3-certbot-nginx -y
+sudo yum install vim -y
+sudo yum install nano -y
 
 # Clone repository
 git clone https://github.com/pimfm/docker-compose-mautic demo
@@ -16,9 +19,9 @@ sudo chmod +x /usr/local/bin/docker-compose
 docker-compose version
 
 # Setup docker
-sudo systemctl start docker
-sudo systemctl enable docker
-sudo systemctl is-enabled docker
+# sudo systemctl start docker
+# sudo systemctl enable docker
+# sudo systemctl is-enabled docker
 
 # Configure Domain with NGINX
 # Generate subdomain from CLIENT_PREFIX and AGENCY_DOMAIN
