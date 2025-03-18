@@ -16,7 +16,7 @@ else
     # replace basic with the Docker network of the client
     if docker ps --filter "name=basic-mautic_worker-1" --filter "status=running" -q | grep -q .; then
         echo "Stopping basic-mautic_worker-1 to avoid https://github.com/mautic/docker-mautic/issues/270"
-        docker stop ${{CLIENT_PREFIX}}-mautic_worker-1
+        docker stop basic-mautic_worker-1
         echo "## Ensure the worker is stopped before installing Mautic"
         while docker ps -q --filter name=basic-mautic_worker-1 | grep -q .; do
             echo "### Waiting for basic-mautic_worker-1 to stop..."
@@ -33,36 +33,36 @@ fi
 echo "## Starting all the containers"
 docker compose up -d
 
-DOMAIN="{{DOMAIN_NAME}}"
+CLIENT_SUBDOMAIN="{{CLIENT_SUBDOMAIN}}"
 
-if [[ "$DOMAIN" == *"DOMAIN_NAME"* ]]; then
-    echo "The DOMAIN variable is not set yet."
+if [[ "$CLIENT_SUBDOMAIN" == *"CLIENT_SUBDOMAIN"* ]]; then
+    echo "The CLIENT_SUBDOMAIN variable is not set yet."
     exit 0
 fi
 
-DROPLET_IP=$(curl -s http://icanhazip.com)
+SERVER_IP_ADDRESS=$(curl -s http://icanhazip.com)
 
-echo "## Checking if $DOMAIN points to this DO droplet..."
-DOMAIN_IP=$(dig +short $DOMAIN)
-if [ "$DOMAIN_IP" != "$DROPLET_IP" ]; then
-    echo "## $DOMAIN does not point to this droplet IP ($DROPLET_IP). Exiting..."
+echo "## Checking if $CLIENT_SUBDOMAIN points to this IP address..."
+DOMAIN_IP=$(dig +short $CLIENT_SUBDOMAIN)
+if [ "$DOMAIN_IP" != "$SERVER_IP_ADDRESS" ]; then
+    echo "## $CLIENT_SUBDOMAIN does not point to this IP address ($SERVER_IP_ADDRESS). Exiting..."
     exit 1
 fi
 
-echo "## $DOMAIN is available and points to this droplet. Nginx configuration..."
+echo "## $CLIENT_SUBDOMAIN is available and points to this droplet. Nginx configuration..."
 
-SOURCE_PATH="/var/www/nginx-virtual-host-$DOMAIN"
-TARGET_PATH="/etc/nginx/sites-enabled/nginx-virtual-host-$DOMAIN"
+SOURCE_PATH="/var/www/nginx-virtual-host-$CLIENT_SUBDOMAIN"
+TARGET_PATH="/etc/nginx/sites-enabled/nginx-virtual-host-$CLIENT_SUBDOMAIN"
 
 # Remove the existing symlink if it exists
 if [ -L "$TARGET_PATH" ]; then
     rm $TARGET_PATH
-    echo "Existing symlink for $DOMAIN configuration removed."
+    echo "Existing symlink for $CLIENT_SUBDOMAIN configuration removed."
 fi
 
 # Create a new symlink
 ln -s $SOURCE_PATH $TARGET_PATH
-echo "Symlink created for $DOMAIN configuration."
+echo "Symlink created for $CLIENT_SUBDOMAIN configuration."
 
 if ! nginx -t; then
     echo "Nginx configuration test failed, stopping the script."
@@ -78,13 +78,13 @@ else
     nginx -s reload
 fi
 
-echo "## Configuring Let's Encrypt for $DOMAIN..."
+echo "## Configuring Let's Encrypt for $CLIENT_SUBDOMAIN..."
 
 # Use Certbot with the Nginx plugin to obtain and install a certificate
-certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m {{EMAIL_ADDRESS}}
+certbot --nginx -d $CLIENT_SUBDOMAIN --non-interactive --agree-tos -m {{AGENCY_ADMIN_EMAIL_ADDRESS}}
 
 # Nginx will be reloaded automatically by Certbot after obtaining the certificate
-echo "## Let's Encrypt configured for $DOMAIN"
+echo "## Let's Encrypt configured for $CLIENT_SUBDOMAIN"
 
 # Check if the cron job for renewal is already set
 if ! crontab -l | grep -q 'certbot renew'; then
@@ -100,7 +100,7 @@ if docker compose exec -T mautic_web test -f /var/www/html/config/local.php && d
     
     # Replace the site_url value with the domain
     echo "## Updating site_url in Mautic configuration..."
-    docker compose exec -T mautic_web sed -i "s|'site_url' => '.*',|'site_url' => 'https://$DOMAIN',|g" /var/www/html/config/local.php
+    docker compose exec -T mautic_web sed -i "s|'site_url' => '.*',|'site_url' => 'https://$CLIENT_SUBDOMAIN',|g" /var/www/html/config/local.php
 fi
 
 echo "## Script execution completed"
