@@ -8,6 +8,7 @@ sudo yum install certbot -y
 sudo yum install python3-certbot-nginx -y
 sudo yum install vim -y
 sudo yum install nano -y
+sudo yum install crontab -y
 echo "## Done"
 
 # Setup docker compose

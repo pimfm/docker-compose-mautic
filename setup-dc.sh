@@ -50,8 +50,11 @@ fi
 
 #echo "## $CLIENT_SUBDOMAIN is available and points to this droplet. Nginx configuration..."
 
-SOURCE_PATH="/var/www/nginx-virtual-host-$CLIENT_SUBDOMAIN"
+SOURCE_PATH="$HOME/demo/nginx-virtual-host-$CLIENT_SUBDOMAIN"
 TARGET_PATH="/etc/nginx/sites-enabled/nginx-virtual-host-$CLIENT_SUBDOMAIN"
+
+# Ensure symlink path exists
+sudo mkdir -p /etc/nginx/sites-enabled
 
 # Remove the existing symlink if it exists
 if [ -L "$TARGET_PATH" ]; then
